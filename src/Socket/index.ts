@@ -1,7 +1,7 @@
 import { DEFAULT_CONNECTION_CONFIG } from '../Defaults'
 import { UserFacingSocketConfig } from '../Types'
 import { makeBusinessSocket } from './business'
-import { generateMessageID } from '../Utils/generics' // ajuste o caminho conforme sua estrutura real
+import { generateMessageID } from '../Utils/generics'
 
 export const makeWASocket = (config: UserFacingSocketConfig) => {
   const sock = makeBusinessSocket({
@@ -9,25 +9,33 @@ export const makeWASocket = (config: UserFacingSocketConfig) => {
     ...config,
   });
 
-  async function offerCall(jid: string) {
+  async function offerCall(jid: string, isVideo = false) {
+    const callInfo = {
+      id: generateMessageID(),
+      to: jid
+    }
+
     await sock.sendNode({
       tag: 'call',
       attrs: {
         from: sock.authState.creds.me?.id!,
-        to: jid,
-        id: generateMessageID(),
+        to: callInfo.to,
+        id: callInfo.id,
+        video: isVideo ? 'true' : 'false', // opcional
       },
       content: [],
     });
+
+    return callInfo;
   }
 
-  async function terminateCall(jid: string) {
+  async function terminateCall(id: string, to: string) {
     await sock.sendNode({
       tag: 'call',
       attrs: {
         from: sock.authState.creds.me?.id!,
-        to: jid,
-        id: generateMessageID(),
+        to,
+        id,
         type: 'terminate',
       },
       content: [],
